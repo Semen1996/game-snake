@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Змейка</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      border: 1px solid white;
+    }
+  </style>
+</head>
+<body>
+  <canvas width="400" height="400" id="game"></canvas>
+  <script>
+
+    var canvas = document.getElementById('game');
+    var context = canvas.getContext('2d');
+    var grid = 16;
+    var count = 0;
+
+    // Параеметры змейки: x, y - начальные координаты; dx, dy - размеры шага (в начальный момент она движется только по горизонтали);
+    // cells - хвост (количество очков); maxCells - стартовая длина змейки
+    var snake = {
+      x: 160,
+      y: 160,
+      dx: grid,
+      dy: 0,
+      cells: [],
+      maxCells: 4
+    };
+
+    // Еда: x, y - начальные координаты
+    var apple = {
+      x: 320,
+      y: 320
+    };
+
+    // Функция для получения рандомного числа в заданном диапозоне
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    // Функция для граничных условий
+    function boundaryConditions() {
+      if (snake.x < 0) {
+        snake.x = canvas.width - grid;
+      }
+      else if (snake.x >= canvas.width) {
+        snake.x = 0;
+      }
+
+      if (snake.y < 0) {
+        snake.y = canvas.height - grid;
+      }
+      else if (snake.y >= canvas.height) {
+        snake.y = 0;
+      }
+    }
+
+    // Если змейка добралась до яблока, увеличиваем длину змейки и рисуем ноыое яблоко
+    function snakeEat(cell) {
+      if (cell.x === apple.x && cell.y === apple.y) {
+        snake.maxCells++;
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+      }
+    }
+
+    // Проверяем, не столкнулась ли змея сама с собой
+    function snakeDead(cell, index) {
+      for (var i = index + 1; i < snake.cells.length; i++) {
+        if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+          // Задаём стартовые параметры основным переменным
+          snake.x = 160;
+          snake.y = 160;
+          snake.cells = [];
+          snake.maxCells = 4;
+          snake.dx = grid;
+          snake.dy = 0;
+          // Ставим яблочко в случайное место
+          apple.x = getRandomInt(0, 25) * grid;
+          apple.y = getRandomInt(0, 25) * grid;
+        }
+      }
+    }
+
+
+    // Игровой цикл — основной процесс, внутри которого будет всё происходить
+    function loop() {
+      requestAnimationFrame(loop);
+      
+      // Задаем скорость движения змейки
+      if (++count < 8) {
+        return;
+      }
+      count = 0;
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      snake.x += snake.dx;
+      snake.y += snake.dy;
+
+      boundaryConditions();
+
+      // Изменение положения змейки
+      snake.cells.unshift({ x: snake.x, y: snake.y });
+      if (snake.cells.length > snake.maxCells) {
+        snake.cells.pop();
+      }
+
+      // Рисуем еду — красное яблоко
+      context.fillStyle = 'red';
+      context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+
+      context.fillStyle = 'green';
+      snake.cells.forEach(function (cell, index) {
+        // Чтобы создать эффект клеточек, делаем зелёные квадратики меньше на один пиксель, чтобы вокруг них образовалась чёрная граница
+        context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+        snakeEat(cell);
+        snakeDead(cell, index);
+      });
+    }
+
+    // Смотрим, какие нажимаются клавиши, и реагируем на них нужным образом
+    document.addEventListener('keydown', function (e) {
+
+      // Стрелка влево
+      if (e.which === 37 && snake.dx === 0) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      }
+      // Стрелка вверх
+      else if (e.which === 38 && snake.dy === 0) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      }
+      // Стрелка вправо
+      else if (e.which === 39 && snake.dx === 0) {
+        snake.dx = grid;
+        snake.dy = 0;
+      }
+      // Стрелка вниз
+      else if (e.which === 40 && snake.dy === 0) {
+        snake.dy = grid;
+        snake.dx = 0;
+      }
+    });
+
+    // Запускаем игру
+    requestAnimationFrame(loop);
+  </script>
+</body>
+
+</html>
